@@ -27,7 +27,7 @@ Columns in the Data
 3. Latitude
 4. Longitude
 5. Month_sin
-6. month_cos
+6. Month_cos
 
 Target - ALLSKY_SFC_SW_DWN
 
