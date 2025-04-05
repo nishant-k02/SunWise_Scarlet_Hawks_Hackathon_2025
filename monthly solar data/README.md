@@ -21,6 +21,16 @@ Columns in the Data
 6. CLRSKY_SFC_SW_DWN:
     This column represents the downward shortwave radiation at the surface under clear-sky conditions (in W/m²). It indicates the amount of solar radiation reaching the Earth's surface without the interference of clouds and other atmospheric conditions.
 
+##Features used to train model 
+1. ALLSKY_KT
+2. ALLSKY_SFC_LW_DWN
+3. Latitude
+4. Longitude
+5. Month_sin
+6. month_cos
+
+Target - ALLSKY_SFC_SW_DWN
+
 ## Year-Month Format Breakdown (e.g., 201001)
 The date format in the data is represented as a six-digit number, where:
 
