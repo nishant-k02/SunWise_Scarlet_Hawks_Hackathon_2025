@@ -21,7 +21,7 @@ Columns in the Data
 6. CLRSKY_SFC_SW_DWN:
     This column represents the downward shortwave radiation at the surface under clear-sky conditions (in W/m²). It indicates the amount of solar radiation reaching the Earth's surface without the interference of clouds and other atmospheric conditions.
 
-##Features used to train model 
+## Features used to train model 
 1. ALLSKY_KT
 2. ALLSKY_SFC_LW_DWN
 3. Latitude
