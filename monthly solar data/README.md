@@ -37,11 +37,6 @@ The date format in the data is represented as a six-digit number, where:
 The first four digits represent the year.
 The last two digits represent the month.
 
-For example, a value of 201001 corresponds to:
-Year: 2010
+For example, a value of 201901 corresponds to:
+Year: 2019
 Month: January
-
-So, 201001 refers to January 2010.
-
-201013 refers to Average of all 12 months of 2010
-
