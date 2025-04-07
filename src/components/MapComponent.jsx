@@ -4,6 +4,7 @@ import {
   GoogleMap,
   Marker,
   Autocomplete,
+  Polygon,
 } from "@react-google-maps/api";
 import Papa from "papaparse";
 import axios from "axios";
@@ -22,6 +23,26 @@ import {
   Line,
 } from "recharts";
 
+// New helper to generate dynamic polygon shape (amoeba style)
+const generateRandomAmoeba = (
+  center,
+  radius,
+  numPoints = Math.floor(Math.random() * 8) + 8
+) => {
+  const points = [];
+  for (let i = 0; i < numPoints; i++) {
+    const angle = (2 * Math.PI * i) / numPoints;
+    const randomFactor = 0.7 + 0.6 * Math.random(); // jitter radius
+    const randomRadius = radius * randomFactor;
+    const deltaLat = (randomRadius * Math.sin(angle)) / 111320;
+    const deltaLng =
+      (randomRadius * Math.cos(angle)) /
+      (111320 * Math.cos((center.lat * Math.PI) / 180));
+    points.push({ lat: center.lat + deltaLat, lng: center.lng + deltaLng });
+  }
+  return points;
+};
+
 const COLORS = ["#0088FE", "#FF8042"];
 const MONTHS = [
   "Jan",
@@ -39,25 +60,17 @@ const MONTHS = [
 ];
 
 const MapComponent = () => {
-  // Existing state variables
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [markerPosition, setMarkerPosition] = useState(null);
   const [solarData, setSolarData] = useState([]);
   const [matchedData, setMatchedData] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState("May");
   const [predictionResult, setPredictionResult] = useState(null);
-  // New state for map zoom level
   const [mapZoom, setMapZoom] = useState(13);
-
-  // Dropdown toggles for right panel
   const [showCalculator, setShowCalculator] = useState(false);
   const [showInstallation, setShowInstallation] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(false);
-
-  // Month slider state (using the month index)
   const [monthIndex, setMonthIndex] = useState(MONTHS.indexOf("May"));
-
-  // Personal Solar Calculator state
   const [panelArea, setPanelArea] = useState(5);
   const [monthlyBill, setMonthlyBill] = useState(40);
   const [calculatedResults, setCalculatedResults] = useState({
@@ -67,35 +80,33 @@ const MapComponent = () => {
     monthlySavingKWh: 0,
     monthlySavingMoney: 0,
   });
+  const [analysisMonthlyBill, setAnalysisMonthlyBill] = useState(100);
+  const [energyCostPerKWh, setEnergyCostPerKWh] = useState(0.15);
+  const [solarIncentives, setSolarIncentives] = useState(40);
+  const [panelCapacityWatts, setPanelCapacityWatts] = useState(300);
+  const [panelCount, setPanelCount] = useState(10);
+  const [installationCostPerWatt, setInstallationCostPerWatt] = useState(4);
 
-  // Solar Potential Analysis state
-  const [analysisMonthlyBill, setAnalysisMonthlyBill] = useState(100); // $ per month
-  const [energyCostPerKWh, setEnergyCostPerKWh] = useState(0.15); // $ per kWh
-  const [solarIncentives, setSolarIncentives] = useState(40); // percentage discount
-  const [panelCapacityWatts, setPanelCapacityWatts] = useState(300); // watts per panel
-  const [panelCount, setPanelCount] = useState(10); // number of panels
-  const [installationCostPerWatt, setInstallationCostPerWatt] = useState(4); // cost per watt in $
-
+  const [amoebaPaths, setAmoebaPaths] = useState([]); // New state for polygon
   const autocompleteRef = useRef(null);
 
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY",
+    googleMapsApiKey: "your-api-key", // Replace with your key
     libraries: ["places"],
   });
 
   useEffect(() => {
     fetch("/data/chicago_data.csv")
       .then((res) => res.text())
-      .then((text) =>
+      .then((text) => {
         Papa.parse(text, {
           header: true,
           dynamicTyping: true,
           complete: (results) => setSolarData(results.data),
-        })
-      );
+        });
+      });
   }, []);
 
-  // Recalculate Personal Solar Calculator values
   useEffect(() => {
     const solarEnergyValue = predictionResult || 4.5;
     if (panelArea > 0 && monthlyBill > 0) {
@@ -116,7 +127,6 @@ const MapComponent = () => {
     }
   }, [panelArea, monthlyBill, predictionResult]);
 
-  // Solar Potential Analysis Calculations
   const avgSunHours = 4;
   const totalCapacityWatts = panelCount * panelCapacityWatts;
   const yearlyProduction = (totalCapacityWatts / 1000) * avgSunHours * 365;
@@ -137,25 +147,16 @@ const MapComponent = () => {
       netInstallationCost +
       analysisMonthlyBill * (1 - energyCoveredFraction) * 12 * y;
     const savings = costWithoutSolar - costWithSolar;
-    analysisData.push({
-      year: y,
-      costWithoutSolar,
-      costWithSolar,
-      savings,
-    });
+    analysisData.push({ year: y, costWithoutSolar, costWithSolar, savings });
     if (breakEvenYear === null && costWithSolar <= costWithoutSolar) {
       breakEvenYear = y;
     }
   }
 
-  // Helper to calculate sine and cosine features
   const getMonthFeatures = (monthLabel) => {
     const index = MONTHS.indexOf(monthLabel);
     const angle = (2 * Math.PI * index) / 12;
-    return {
-      sin: Math.sin(angle),
-      cos: Math.cos(angle),
-    };
+    return { sin: Math.sin(angle), cos: Math.cos(angle) };
   };
 
   const handlePlaceChanged = async () => {
@@ -190,7 +191,6 @@ const MapComponent = () => {
         coordinates: { lat, lng },
       });
       setMarkerPosition({ lat, lng });
-      // Zoom into the location when found
       setMapZoom(19);
 
       const match = solarData.find(
@@ -222,6 +222,18 @@ const MapComponent = () => {
         .catch(() => setPredictionResult(null));
     }
   };
+
+  // 💡 New: Update polygon whenever marker position or zoom changes
+  useEffect(() => {
+    if (markerPosition) {
+      const metersPerPixel =
+        (156543.03392 * Math.cos((markerPosition.lat * Math.PI) / 180)) /
+        Math.pow(2, mapZoom);
+      const radius = 100 * metersPerPixel;
+      const newPaths = generateRandomAmoeba(markerPosition, radius);
+      setAmoebaPaths(newPaths);
+    }
+  }, [markerPosition, mapZoom]);
 
   const handlePanelAreaChange = (e) => {
     setPanelArea(parseFloat(e.target.value) || 0);
@@ -288,9 +300,25 @@ const MapComponent = () => {
             fullscreenControl: true,
           }}
         >
-          {markerPosition && <Marker position={markerPosition} />}
+          {markerPosition && (
+            <>
+              <Marker position={markerPosition} />
+              {amoebaPaths.length > 0 && (
+                <Polygon
+                  paths={amoebaPaths}
+                  options={{
+                    strokeColor: "#FFFF00",
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: "#FFA500",
+                    fillOpacity: 0.35,
+                  }}
+                />
+              )}
+            </>
+          )}
+          {/* Your other UI components */}
         </GoogleMap>
-
         {selectedPlace && (
           <div
             style={{
@@ -378,7 +406,7 @@ const MapComponent = () => {
             type="text"
             placeholder="Search for a location"
             style={{
-              width: "100%",
+              width: "96%",
               padding: "10px",
               fontSize: "16px",
               borderRadius: "5px",
@@ -393,15 +421,18 @@ const MapComponent = () => {
           <div
             onClick={toggleCalculator}
             style={{
-              background: "#0277bd",
-              color: "#fff",
+              background: "#FFD300",
               padding: "10px",
               borderRadius: "5px",
               cursor: "pointer",
               marginBottom: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Personal Solar Calculator
+            <span>Personal Solar Calculator</span>
+            <span>{showCalculator ? "▲" : "▼"}</span>
           </div>
           {showCalculator && (
             <div
@@ -560,9 +591,13 @@ const MapComponent = () => {
               borderRadius: "5px",
               cursor: "pointer",
               marginBottom: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Estimated Solar Installation Potential
+            <span>Estimated Solar Installation Potential</span>
+            <span>{showInstallation ? "▲" : "▼"}</span>
           </div>
           {showInstallation && matchedData && (
             <div
@@ -744,9 +779,13 @@ const MapComponent = () => {
               borderRadius: "5px",
               cursor: "pointer",
               marginBottom: "10px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            Solar Potential Analysis
+            <span>Solar Potential Analysis</span>
+            <span>{showAnalysis ? "▲" : "▼"}</span>
           </div>
           {showAnalysis && (
             <div
