@@ -87,8 +87,17 @@ Special thanks to the mentors, judges, and fellow hackers who inspired us throug
 
 ## 📸 Demo & Screenshots
 
-*Add demo video link or screenshots here*
+*Opening Page*
+ # ![image](https://github.com/AtharvPat/Scarlet_Hawks_Hackathon_2025/blob/main/Screenshot/1.png)
 
+ *Personal Solar Calculator*
+  # ![image](https://github.com/AtharvPat/Scarlet_Hawks_Hackathon_2025/blob/main/Screenshot/2.1.png)
+
+  *Estimated Solar Installation Potential*
+   # ![image](https://github.com/AtharvPat/Scarlet_Hawks_Hackathon_2025/blob/main/Screenshot/2.png)
+
+   *Solar Potential Analysis*
+    # ![image](https://github.com/AtharvPat/Scarlet_Hawks_Hackathon_2025/blob/main/Screenshot/3.png)
 ---
 
 ## 📬 Contact
