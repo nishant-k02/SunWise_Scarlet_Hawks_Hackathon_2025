@@ -94,5 +94,5 @@ Special thanks to the mentors, judges, and fellow hackers who inspired us throug
 ## 📬 Contact
 
 For collaboration, feedback, or questions:  
-📧 your.email@example.com  
-🌐 [your-portfolio-or-linkedin]
+📧 atharvpat03@gmail.com  
+🌐 [linkedin](https://www.linkedin.com/in/atharv-patil-414b531b4/)
