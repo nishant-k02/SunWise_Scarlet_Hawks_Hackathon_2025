@@ -95,6 +95,7 @@ const MapComponent = () => {
     libraries: ["places"],
   });
 
+  
   useEffect(() => {
     fetch("/data/chicago_data.csv")
       .then((res) => res.text())
