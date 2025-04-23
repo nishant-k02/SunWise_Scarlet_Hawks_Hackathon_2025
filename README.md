@@ -29,8 +29,3 @@ React + Google Maps API
 Flask (Python) Backend with ML models
 
 Recharts + CSV (climate data)
-
-UNet (PyTorch) for rooftop segmentation
-=======
-# ☀️ SunWise: Unlock Your Rooftop's Solar Potential  
-**🏆 Built in 24 Hours at Scarlet_Hawks_2025 | Theme: Environmental Sustainability**
